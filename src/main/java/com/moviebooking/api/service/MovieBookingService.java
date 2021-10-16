@@ -41,9 +41,9 @@ public class MovieBookingService {
 	private final UserRepository userRepo;
 
 	// To Maintain Atomicity .so if any seat is locked rollback the whole
-	// transaction and cancel all bookings.
+	// transaction and cancel all bookings , with the least restrictive isolation level.
 
-	@Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_UNCOMMITTED)
+	@Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_UNCOMMITTED )
 	public BookingResponseDTO bookSeats(BookingRequestDTO bookingRequest, Long userId)
 			throws SeatAlreadyReserved, CompletePaymentForBookedSeats, MaximumSeatsExceeded {
 		

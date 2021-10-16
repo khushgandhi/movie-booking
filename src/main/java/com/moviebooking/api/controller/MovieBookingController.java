@@ -2,6 +2,9 @@ package com.moviebooking.api.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.moviebooking.api.common.CommonConstant;
 import com.moviebooking.api.dto.AvailableSeatResponseDTO;
 import com.moviebooking.api.dto.BookingRequestDTO;
 import com.moviebooking.api.dto.BookingResponseDTO;
@@ -20,25 +24,32 @@ import com.moviebooking.api.exception.PaymentFailedException;
 import com.moviebooking.api.exception.SeatAlreadyReserved;
 import com.moviebooking.api.service.MovieBookingService;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/movie-booking")
 @Slf4j
+@Validated
 public class MovieBookingController {
 
 	private final MovieBookingService movieBookingService;
 
 	@RequestMapping(path = "/shows", method = RequestMethod.GET)
-	public AvailableSeatResponseDTO getAvailbaleShows(@RequestParam("showId") Long showId) {
+	public AvailableSeatResponseDTO getShowInfo(@RequestParam("showId") Long showId) {
 		return movieBookingService.getShowInfo(showId);
 	}
 
 	@RequestMapping(path = "/book", method = RequestMethod.POST)
-	public ResponseEntity<BookingResponseDTO> book(@RequestParam("userId") Long userId,
-			@Validated @RequestBody BookingRequestDTO bookingRequest) {
+	public ResponseEntity<BookingResponseDTO> book(@Valid @RequestBody BookingRequestDTO bookingRequest,
+			HttpServletRequest req) {
+
+		Long userId = (Long) req.getAttribute(CommonConstant.USER_ID_ATTRIBUTE);
+
+		if (userId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
 		try {
 			BookingResponseDTO resp = movieBookingService.bookSeats(bookingRequest, userId);
 
@@ -66,7 +77,13 @@ public class MovieBookingController {
 	}
 
 	@RequestMapping(path = "/bookedSeats", method = RequestMethod.GET)
-	public List<Long> getBookedSeats(@RequestParam("userId") Long userId) {
+	public List<Long> getBookedSeats(HttpServletRequest req) {
+		Long userId = (Long) req.getAttribute(CommonConstant.USER_ID_ATTRIBUTE);
+
+		if(userId==null)
+		{
+			return null;
+		}
 		return movieBookingService.getBookedSeats(userId);
 	}
 
